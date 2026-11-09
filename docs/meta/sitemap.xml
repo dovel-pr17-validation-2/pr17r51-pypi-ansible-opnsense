@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+   <url><loc>https://ansible-opnsense.oxl.app/</loc></url>
+
+   <url><loc>https://ansible-opnsense.oxl.app/usage/1_install.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/usage/2_basic.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/usage/3_troubleshoot.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/usage/4_develop.html</loc></url>
+
+   <url><loc>https://ansible-opnsense.oxl.app/basics/1_basic.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/basics/1_multi.html</loc></url>
+
+   <url><loc>https://ansible-opnsense.oxl.app/general/list.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/general/reload.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/general/raw.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/general/service.html</loc></url>
+
+   <url><loc>https://ansible-opnsense.oxl.app/modules/access.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/acmeclient.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/alias.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/alias_multi.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/bind.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/cron.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/dhcp.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/dhcrelay_destination.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/dhcrelay_relay.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/dnsmasq.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/frr_bfd.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/frr_bgp.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/frr_diagnostic.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/frr_general.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/frr_ospf.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/frr_rip.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/hasync.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/ids.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/interface.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/ipsec.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/monit.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/nat_destination.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/neighbor.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/nginx.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/openvpn.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/package.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/postfix.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/radvd.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/route.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/rule.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/rule_interface_group.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/rule_multi.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/savepoint.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/shaper.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/snapshot.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/syslog.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/system.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_acl.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_dnsbl.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_dot.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_forwarding.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_general.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_host.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/unbound_host_alias.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/webproxy.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/wireguard.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/nut.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/nut_diagnostics.html</loc></url>
+   <url><loc>https://ansible-opnsense.oxl.app/modules/trust.html</loc></url>
+</urlset>

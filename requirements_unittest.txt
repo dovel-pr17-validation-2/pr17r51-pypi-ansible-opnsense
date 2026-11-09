@@ -1,0 +1,7 @@
+ansible-core
+pytest
+pytest-ansible
+httpx
+requests
+pytest-mock
+pytest-cov

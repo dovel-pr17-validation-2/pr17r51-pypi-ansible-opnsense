@@ -1,0 +1,203 @@
+---
+
+# todo: test default matching
+
+- name: Testing Unbound Host-Alias
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/oxlorg.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+    oxlorg.opnsense.unbound_host:
+      match_fields: ['description']
+      timeout: 60
+
+    oxlorg.opnsense.unbound_host_alias:
+      match_fields: ['description']
+      timeout: 60
+
+    oxlorg.opnsense.list:
+      target: 'unbound_host_alias'
+
+  environment:
+    HTTPS_PROXY: "{{ lookup('ansible.builtin.env', 'TEST_PROXY') | default('') }}"
+
+  tasks:
+    - name: Listing
+      oxlorg.opnsense.list:
+      register: opn10
+      failed_when: >
+        'data' not in opn10 or
+        opn10.data | length != 0
+
+    - name: Adding alias to link
+      oxlorg.opnsense.unbound_host:
+        hostname: 'host'
+        domain: 'opnsense.test.oxlorg.net'
+        value: '192.168.0.1'
+        description: 'ANSIBLE_TEST_2_1'
+        reload: false  # speed
+
+    - name: Removing - does not exist
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'e'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_1'
+        state: 'absent'
+        reload: false
+      register: opn1
+      failed_when: >
+        opn1.failed or
+        opn1.changed
+      when: not ansible_check_mode
+
+    - name: Adding 1 - failing because of invalid target
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'a'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'does.not.exist'
+        reload: false
+      register: opn11
+      failed_when: not opn11.failed
+
+    - name: Adding 1 - failing because of invalid domain
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'b'
+        domain: '!INVALID-DOMAIN!'
+        target: 'host.opnsense.test.oxlorg.net'
+        reload: false
+      register: opn12
+      failed_when: not opn12.failed
+
+    - name: Adding 1
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'c'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_1'
+        reload: false  # speed
+      register: opn4
+      failed_when: >
+        opn4.failed or
+        not opn4.changed
+      when: not ansible_check_mode
+
+    - name: Disabling 1
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'c'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_1'
+        enabled: false
+        reload: false  # speed
+      register: opn6
+      failed_when: >
+        opn6.failed or
+        not opn6.changed
+      when: not ansible_check_mode
+
+    - name: Disabling 1 - nothing changed
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'c'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_1'
+        enabled: false
+        reload: false  # speed
+      register: opn9
+      failed_when: >
+        opn9.failed or
+        opn9.changed
+      when: not ansible_check_mode
+
+    - name: Enabling 1
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'c'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_1'
+        reload: false  # speed
+      register: opn7
+      failed_when: >
+        opn7.failed or
+        not opn7.changed
+      when: not ansible_check_mode
+
+    - name: Adding 2
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'd'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_2'
+        reload: false  # speed
+      register: opn5
+      failed_when: >
+        opn5.failed or
+        not opn5.changed
+      when: not ansible_check_mode
+
+    - name: Adding 2 - nothing changed
+      oxlorg.opnsense.unbound_host_alias:
+        alias: 'd'
+        domain: 'opnsense.test.oxlorg.net'
+        target: 'host.opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_1_2'
+        reload: false  # speed
+      register: opn13
+      failed_when: >
+        opn13.failed or
+        opn13.changed
+      when: not ansible_check_mode
+
+    - name: Removing 2
+      oxlorg.opnsense.unbound_host_alias:
+        description: 'ANSIBLE_TEST_1_2'
+        alias: 'd'
+        domain: 'opnsense.test.oxlorg.net'
+        state: 'absent'
+        reload: false  # speed
+      register: opn8
+      failed_when: >
+        opn8.failed or
+        not opn8.changed
+      when: not ansible_check_mode
+
+    - name: Listing
+      oxlorg.opnsense.list:
+      register: opn3
+      failed_when: >
+        'data' not in opn3 or
+        opn3.data | length != 1
+      when: not ansible_check_mode
+
+    - name: Cleanup
+      oxlorg.opnsense.unbound_host_alias:
+        description: "{{ item }}"
+        alias: 'dummy'
+        domain: 'dummy'
+        state: 'absent'
+        reload: false
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+      when: not ansible_check_mode
+
+    - name: Cleanup host
+      oxlorg.opnsense.unbound_host:
+        hostname: 'host'
+        domain: 'opnsense.test.oxlorg.net'
+        description: 'ANSIBLE_TEST_2_1'
+        state: 'absent'
+        reload: false
+
+    - name: Listing
+      oxlorg.opnsense.list:
+      register: opn2
+      failed_when: >
+        'data' not in opn2 or
+        opn2.data | length != 0
+      when: not ansible_check_mode

@@ -1,0 +1,1317 @@
+---
+
+- name: Cleaning up firewall config
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/oxlorg.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+  environment:
+    HTTPS_PROXY: "{{ lookup('ansible.builtin.env', 'TEST_PROXY') | default('') }}"
+
+  tasks:
+    - name: Cleanup Rules
+      oxlorg.opnsense.rule_multi:
+        multi_control:
+          purge_all: true
+        match_fields: ['description']
+
+    - name: Cleanup Aliases (skips referenced by other)
+      oxlorg.opnsense.alias_multi:
+        multi_control:
+          purge_all: true
+          fail_process: false
+
+    - name: Cleanup Aliases (previously referenced)
+      oxlorg.opnsense.alias_multi:
+        multi_control:
+          purge_all: true
+          fail_process: false
+
+    - name: Cleanup packages
+      oxlorg.opnsense.package:
+        name: ['os-hw-probe', 'os-dmidecode']
+        action: "{{ item }}"
+        timeout: 60
+      diff: false
+      loop:
+        - 'unlock'
+        - 'remove'
+
+    - name: Cleanup cron jobs
+      oxlorg.opnsense.cron:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup routes
+      oxlorg.opnsense.route:
+        description: "{{ item }}"
+        network: '192.168.0.0/32'
+        gateway: 'LAN_GW'
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup Unbound General
+      oxlorg.opnsense.unbound_general:
+        enabled: false
+        reload: false  # speed
+
+    - name: Cleanup Unbound DNS ACLs
+      oxlorg.opnsense.unbound_acl:
+        name: "{{ item }}"
+        state: 'absent'
+        reload: false  # speed
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup Unbound DNS-over-TLS
+      oxlorg.opnsense.unbound_dot:
+        target: "{{ item }}"
+        state: 'absent'
+        reload: false  # speed
+      loop:
+        - '1.1.1.1'
+        - '1.1.1.2'
+        - '1.1.1.3'
+        - '1.1.1.4'
+
+    - name: Cleanup Unbound DNS-Forwarding's
+      oxlorg.opnsense.unbound_forward:
+        domain: "{{ item.d }}"
+        target: "{{ item.t }}"
+        state: 'absent'
+        reload: false  # speed
+      loop:
+        - {d: 'fwd.opnsense.test.oxlorg.net', t: '1.1.1.1'}
+        - {d: 'fwd.opnsense.test.oxlorg.net', t: '1.1.1.2'}
+        - {d: '', t: '1.1.1.3'}
+        - {d: '', t: '1.1.1.4'}
+
+    - name: Cleanup Unbound DNS host-override aliases
+      oxlorg.opnsense.unbound_host_alias:
+        description: "{{ item }}"
+        alias: 'dummy'
+        domain: 'dummy'
+        state: 'absent'
+        match_fields: ['description']
+        reload: false  # speed
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup Unbound DNS host-overrides
+      oxlorg.opnsense.unbound_host:
+        description: "{{ item }}"
+        hostname: 'dummy'
+        domain: 'dummy'
+        state: 'absent'
+        match_fields: ['description']
+        reload: false  # speed
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup
+      oxlorg.opnsense.unbound_dnsbl:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup syslog
+      oxlorg.opnsense.syslog:
+        description: "{{ item }}"
+        target: '192.168.0.1'
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+        - 'ANSIBLE_TEST_3'
+
+    - name: Cleanup ipsec certs
+      oxlorg.opnsense.ipsec_cert:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup shaper pipes
+      oxlorg.opnsense.shaper_pipe:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup shaper queues
+      oxlorg.opnsense.shaper_queue:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup shaper rules
+      oxlorg.opnsense.shaper_rule:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup monit services
+      oxlorg.opnsense.monit_service:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+
+    - name: Cleanup monit alerts
+      oxlorg.opnsense.monit_alert:
+        recipient: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'alert@monit.opnsense.test.oxlorg.net'
+        - 'alert2@monit.opnsense.test.oxlorg.net'
+
+    - name: Cleanup monit tests
+      oxlorg.opnsense.monit_test:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup wireguard servers
+      oxlorg.opnsense.wireguard_server:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup wireguard peers
+      oxlorg.opnsense.wireguard_peer:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup wireguard general
+      oxlorg.opnsense.wireguard_general:
+        enabled: false
+
+    - name: Cleanup VIPs
+      oxlorg.opnsense.interface_vip:
+        interface: "{{ item.int }}"
+        address: "{{ item.ip }}"
+        state: 'absent'
+      loop:
+        - {int: 'lan', ip: '192.168.1.1/30'}
+        - {int: 'opt1', ip: '192.168.2.1/24'}
+        - {int: 'opt1', ip: '2001:db8::1/128'}
+
+    - name: Cleanup vlan interfaces
+      oxlorg.opnsense.interface_vlan:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup vxlan interfaces
+      oxlorg.opnsense.interface_vxlan:
+        id: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 100
+        - 101
+
+    - name: Cleanup lagg interfaces
+      oxlorg.opnsense.interface_lagg:
+        device: 'lagg0'
+        state: 'absent'
+
+    - name: Cleanup GRE interfaces
+      oxlorg.opnsense.interface_gre:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup Bridge interfaces
+      oxlorg.opnsense.interface_bridge:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup GIF interfaces
+      oxlorg.opnsense.interface_gif:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup Assigned Interfaces 1/2
+      oxlorg.opnsense.interface_assignment:
+        identifier: 'opt3'
+        state: 'absent'
+
+    - name: Cleanup Assigned Interfaces 2/2
+      oxlorg.opnsense.interface_assignment:
+        identifier: 'opt2'
+        description: 'TEST2'
+        device: 'vtnet3'
+        enabled: false
+
+    - name: Cleanup source-nat
+      oxlorg.opnsense.source_nat:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup on-to-one nat
+      oxlorg.opnsense.one_to_one:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup destination-nat
+      oxlorg.opnsense.destination_nat:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup FRR general settings
+      oxlorg.opnsense.frr_general:
+        enabled: false
+        profile: 'traditional'
+        carp: false
+        snmp_agentx: false
+        log: true
+        log_level: 'notifications'
+
+    - name: Cleanup FRR BFD general settings
+      oxlorg.opnsense.frr_bfd_general:
+        enabled: false
+
+    - name: Cleanup FRR BFD neighbors
+      oxlorg.opnsense.frr_bfd_neighbor:
+        ip: "{{ item }}"
+        state: 'absent'
+      loop:
+        - '10.0.0.1'
+        - '10.0.0.0/28'
+
+    - name: Cleanup FRR BGP general settings
+      oxlorg.opnsense.frr_bgp_general:
+        as_number: 1337
+        enabled: false
+
+    - name: Cleanup FRR BGP neighbors
+      oxlorg.opnsense.frr_bgp_neighbor:
+        description: "{{ item }}"
+        state: 'absent'
+        match_fields: ['description']
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+
+    - name: Cleanup FRR BGP route-maps
+      oxlorg.opnsense.frr_bgp_route_map:
+        name: "{{ item.name }}"
+        id: "{{ item.id }}"
+        state: 'absent'
+      loop:
+        - {'name': 'ANSIBLE_TEST_1_1', id: 45}
+        - {'name': 'ANSIBLE_TEST_1_1', id: 51}
+        - {'name': 'ANSIBLE_TEST_1_2', id: 65}
+        - {'name': 'ANSIBLE_TEST_2_1', id: 65}
+        - {'name': 'ANSIBLE_TEST_2_2', id: 66}
+        - {'name': 'ANSIBLE_TEST_2_3', id: 67}
+        - {'name': 'ANSIBLE_TEST_3_1', id: 50}
+
+    - name: Cleanup FRR BGP prefix lists
+      oxlorg.opnsense.frr_bgp_prefix_list:
+        name: "{{ item.n }}"
+        seq: "{{ item.s | default(omit) }}"
+        state: 'absent'
+      loop:
+        - {'n': 'ANSIBLE_TEST_1_1', 's': 55}
+        - {'n': 'ANSIBLE_TEST_1_2', 's': 56}
+        - {'n': 'ANSIBLE_TEST_1_2', 's': 57}
+        - {'n': 'ANSIBLE_TEST_2_1', 's': 50}
+        - {'n': 'ANSIBLE_TEST_2_1', 's': 51}
+        - {'n': 'ANSIBLE_TEST_3_1', 's': 50}
+        - {'n': 'ANSIBLE_TEST_3_1', 's': 51}
+
+    - name: Cleanup FRR BGP community lists
+      oxlorg.opnsense.frr_bgp_community_list:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR BGP as paths
+      oxlorg.opnsense.frr_bgp_as_path:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR BGP redistributions
+      oxlorg.opnsense.frr_bgp_redistribution:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR BGP Peer Groups
+      oxlorg.opnsense.frr_bgp_peer_group:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OSPF general settings
+      oxlorg.opnsense.frr_ospf_general:
+        enabled: false
+
+    - name: Cleanup OSPFv3 general settings
+      oxlorg.opnsense.frr_ospf3_general:
+        enabled: false
+
+    - name: Cleanup OSPFv3 interfaces
+      oxlorg.opnsense.frr_ospf3_interface:
+        interface: "{{ item }}"
+        state: 'absent'
+        match_fields: ['interface']
+      loop:
+        - 'opt1'
+        - 'lan'
+
+    - name: Cleanup OSPF route-maps
+      oxlorg.opnsense.frr_ospf_route_map:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OSPFv3 route-maps
+      oxlorg.opnsense.frr_ospf3_route_map:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OSPF networks
+      oxlorg.opnsense.frr_ospf_network:
+        ip: "{{ item.ip }}"
+        mask: "{{ item.mask }}"
+        state: 'absent'
+        match_fields: ['ip', 'mask']
+      loop:
+        - {'ip': '10.0.1.0', 'mask': 30}
+        - {'ip': '10.0.2.0', 'mask': 24}
+        - {'ip': '10.0.3.0', 'mask': 24}
+
+    - name: Cleanup OSPFv3 networks
+      oxlorg.opnsense.frr_ospf3_network:
+        ip: "{{ item.ip }}"
+        mask: "{{ item.mask }}"
+        state: 'absent'
+        match_fields: ['ip', 'mask']
+      loop:
+        - {'ip': '2001:db8:1::', 'mask': 64}
+        - {'ip': '2001:db8::', 'mask': 64}
+
+    - name: Cleanup OSPF prefix-lists
+      oxlorg.opnsense.frr_ospf_prefix_list:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup OSPFv3 prefix-lists
+      oxlorg.opnsense.frr_ospf3_prefix_list:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup FRR OSPF redistributions
+      oxlorg.opnsense.frr_ospf_redistribution:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup FRR OSPFv4 redistributions
+      oxlorg.opnsense.frr_ospf3_redistribution:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup Router Advertisements
+      oxlorg.opnsense.radvd:
+        interface: "{{ item }}"
+        state: 'absent'
+        reload: false
+      loop:
+        - 'lan'
+
+    - name: Cleanup Trust Certificates
+      oxlorg.opnsense.trust_cert:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup Trust CAs
+      oxlorg.opnsense.trust_ca:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_2'
+        - 'ANSIBLE_TEST_3'
+
+    - name: Cleanup BIND general settings
+      oxlorg.opnsense.bind_general:
+        enabled: false
+
+    - name: Cleanup BIND blocklist settings
+      oxlorg.opnsense.bind_blocklist:
+        enabled: false
+
+    - name: Cleanup BIND Records
+      oxlorg.opnsense.bind_record_multi:
+        multi_control:
+          purge_all: true
+      register: bind_cleanup1
+      failed_when:
+        - bind_cleanup1.failed
+        - "'does not seem to exist' not in bind_cleanup1.msg"
+
+    - name: Cleanup BIND Domains
+      oxlorg.opnsense.bind_domain:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'test1.oxlorg'
+        - 'test2.oxlorg'
+        - 'test3.oxlorg'
+        - 'test4.oxlorg'
+
+    - name: Cleanup BIND ACLs
+      oxlorg.opnsense.bind_acl:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+        - 'ANSIBLE_TEST_3_1'
+        - 'ANSIBLE_TEST_3_2'
+      when: not ansible_check_mode
+
+    - name: Cleanup WebProxy General
+      oxlorg.opnsense.webproxy_general:
+        enabled: false
+
+    - name: Cleanup WebProxy Cache
+      oxlorg.opnsense.webproxy_cache:
+
+    - name: Cleanup WebProxy Parent
+      oxlorg.opnsense.webproxy_parent:
+        enabled: false
+
+    - name: Cleanup WebProxy Traffic
+      oxlorg.opnsense.webproxy_traffic:
+        enabled: false
+
+    - name: Cleanup WebProxy Forward
+      oxlorg.opnsense.webproxy_forward:
+
+    - name: Cleanup WebProxy ACL
+      oxlorg.opnsense.webproxy_acl:
+
+    - name: Cleanup WebProxy ICAP
+      oxlorg.opnsense.webproxy_icap:
+        enabled: false
+
+    - name: Cleanup WebProxy Auth
+      oxlorg.opnsense.webproxy_auth:
+
+    - name: Cleanup WebProxy Remote-ACLs
+      oxlorg.opnsense.webproxy_remote_acl:
+        file: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLETEST1'
+        - 'ANSIBLETEST2'
+
+    - name: Cleanup WebProxy PAC-Rule
+      oxlorg.opnsense.webproxy_pac_rule:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup WebProxy PAC-Proxy
+      oxlorg.opnsense.webproxy_pac_proxy:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup WebProxy PAC-Match
+      oxlorg.opnsense.webproxy_pac_match:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup IPSec PSK
+      oxlorg.opnsense.ipsec_psk:
+        identity: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE@TEST1'
+        - 'ANSIBLE@TEST2'
+        - 'ANSIBLE@TEST2X'
+
+    - name: Cleanup IPSec childs
+      oxlorg.opnsense.ipsec_child:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup IPSec connections
+      oxlorg.opnsense.ipsec_connection:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+        - 'ANSIBLE_TEST_4_1'
+        - 'ANSIBLE_TEST_5_1'
+
+    - name: Cleanup IPSec pools
+      oxlorg.opnsense.ipsec_pool:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+
+    - name: Cleanup IPSec VTIs
+      oxlorg.opnsense.ipsec_vti:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IPSec Local-Auth
+      oxlorg.opnsense.ipsec_auth_local:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IPSec Remote-Auth
+      oxlorg.opnsense.ipsec_auth_remote:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IDS General
+      oxlorg.opnsense.ids_general:
+        interfaces: ['opt1']
+        enabled: false
+
+    - name: Cleanup IDS Ruleset
+      oxlorg.opnsense.ids_ruleset:
+        name: 'ET open/compromised'
+        enabled: false
+
+    - name: Cleanup IDS Rule
+      oxlorg.opnsense.ids_rule:
+        sid: 2400000
+
+    - name: Cleanup IDS User-Rule
+      oxlorg.opnsense.ids_user_rule:
+        name: 'ANSIBLE_TEST_1_1'
+        state: 'absent'
+
+    - name: Cleanup IDS Policy
+      oxlorg.opnsense.ids_policy:
+        description: 'ANSIBLE_TEST_1_1'
+        state: absent
+
+    - name: Cleanup IDS Policy-Rule
+      oxlorg.opnsense.ids_policy_rule:
+        sid: 2400000
+        state: absent
+
+    - name: Cleanup OpenVPN Client
+      oxlorg.opnsense.openvpn_client:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+
+    - name: Cleanup OpenVPN Client-Overwrite
+      oxlorg.opnsense.openvpn_client_override:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup OpenVPN Server
+      oxlorg.opnsense.openvpn_server:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup OpenVPN Static-Keys
+      oxlorg.opnsense.openvpn_static_key:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_3_1'
+
+    - name: Cleanup Nginx General
+      oxlorg.opnsense.nginx_general:
+        enabled: false
+
+    - name: Cleanup Nginx Upstream-Server
+      oxlorg.opnsense.nginx_upstream_server:
+        name: 'ANSIBLE@TEST1'
+        state: 'absent'
+
+    - name: Cleanup Gateways
+      oxlorg.opnsense.gateway:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1'
+        - 'ANSIBLE_TEST_2'
+
+    - name: Cleanup Interface groups
+      oxlorg.opnsense.rule_interface_group:
+        name: 'ANSIBLE_TEST'
+        state: 'absent'
+
+    - name: Cleanup dhcrelay
+      oxlorg.opnsense.dhcrelay_relay:
+        interface: '{{ if_dhcrelay }}'
+        state: 'absent'
+      vars:
+        if_dhcrelay: "{{ lookup('ansible.builtin.env', 'TEST_DHCRELAY_IF') | default('lan', true) }}"
+
+    - name: Cleanup dhcrelay-destination
+      oxlorg.opnsense.dhcrelay_destination:
+        name: 'ANSIBLE_TEST_1_1'
+        state: 'absent'
+
+    - name: Cleanup DHCP-reservations
+      oxlorg.opnsense.dhcp_reservation:
+        ip: "{{ item }}"
+        state: 'absent'
+      loop:
+        - '192.168.69.76'
+        - '192.168.69.86'
+
+    - name: Cleanup DHCP-Controlagent
+      oxlorg.opnsense.dhcp_controlagent:
+        enabled: false
+        http_host: '127.0.0.1'
+        http_port: 8000
+
+    - name: Cleanup DHCP HA-Peers
+      oxlorg.opnsense.dhcp_ha_peer:
+        name: "{{ item }}"
+        role: 'primary'
+        url: 'http://192.168.1.1:8080'
+        state: 'absent'
+      loop:
+        - 'peer1'
+        - 'peer2'
+
+    - name: Cleanup DHCP Settings
+      oxlorg.opnsense.dhcp_general:
+        enabled: false
+
+    - name: Cleanup DHCP Subnets
+      oxlorg.opnsense.dhcp_subnet:
+        subnet: "{{ item }}"
+        state: 'absent'
+      loop:
+        - '192.168.69.0/24'
+        - '192.168.88.0/24'
+        - '192.168.89.0/24'
+
+    - name: Cleanup Kea DHCPv4 Options
+      oxlorg.opnsense.dhcp_option:
+        description: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ansible-test-option'
+
+    - name: Cleanup Kea DDNS
+      oxlorg.opnsense.dhcp_ddns:
+        enabled: false
+        server_ip: '127.0.0.1'
+        server_port: 53001
+
+    - name: Cleanup ACME Certificates
+      oxlorg.opnsense.acme_certificate:
+        description: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+
+    - name: Cleanup ACME General
+      oxlorg.opnsense.acme_general:
+        enabled: false
+
+    - name: Cleanup ACME Account
+      oxlorg.opnsense.acme_account:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_DUMMY_1_1'
+
+    - name: Cleanup ACME Action
+      oxlorg.opnsense.acme_action:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_1_6'
+        - 'ANSIBLE_TEST_1_7'
+        - 'ANSIBLE_TEST_1_8'
+        - 'ANSIBLE_TEST_1_9'
+        - 'ANSIBLE_TEST_1_10'
+        - 'ANSIBLE_TEST_DUMMY_1_1'
+
+    - name: Cleanup ACME Validation
+      oxlorg.opnsense.acme_validation:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_1_6'
+        - 'ANSIBLE_TEST_1_7'
+        - 'ANSIBLE_TEST_1_8'
+        - 'ANSIBLE_TEST_1_9'
+        - 'ANSIBLE_TEST_1_10'
+        - 'ANSIBLE_TEST_1_11'
+        - 'ANSIBLE_TEST_DUMMY_1_1'
+
+    - name: Cleanup Postfix General
+      oxlorg.opnsense.postfix_general:
+        enabled: false
+
+    - name: Cleanup Postfix Address
+      oxlorg.opnsense.postfix_address:
+        address: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Domain
+      oxlorg.opnsense.postfix_domain:
+        domainname: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'example.com'
+        - 'example.net'
+
+    - name: Cleanup Postfix Headercheck
+      oxlorg.opnsense.postfix_headercheck:
+        expression: '/^\s*User-Agent/ IGNORE'
+        filter: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'WHILE_RECEIVING'
+        - 'WHILE_DELIVERING'
+
+    - name: Cleanup Postfix Recipient
+      oxlorg.opnsense.postfix_recipient:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Recipient BCC
+      oxlorg.opnsense.postfix_recipientbcc:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Sender
+      oxlorg.opnsense.postfix_sender:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Sender BCC
+      oxlorg.opnsense.postfix_senderbcc:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup Postfix Sender Canonical
+      oxlorg.opnsense.postfix_sendercanonical:
+        address: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'alice@example.com'
+        - 'bob@example.com'
+
+    - name: Cleanup IPSec Manual SPD
+      oxlorg.opnsense.ipsec_manual_spd:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup IPSec General
+      oxlorg.opnsense.ipsec_general:
+
+    - name: Cleanup HASync
+      oxlorg.opnsense.hasync_general:
+
+    - name: Cleanup Snapshots
+      oxlorg.opnsense.snapshot:
+        name: 'default'
+        activate: true
+      register: cl_snap1
+      failed_when:
+        - cl_snap1.failed
+        - "'Unsupported' not in cl_snap1.msg | default('')"
+
+    - name: Cleanup Snapshots
+      oxlorg.opnsense.snapshot:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+      register: cl_snap2
+      failed_when:
+        - cl_snap2.failed
+        - "'Unsupported' not in cl_snap2.msg | default('')"
+
+    - name: Cleanup Wazuh Agent - disable
+      oxlorg.opnsense.wazuh_agent:
+        enabled: false
+        server_address: '127.0.0.1'  # placeholder
+      register: cl_wazuh
+      failed_when: cl_wazuh.failed
+
+    - name: Cleanup Users
+      oxlorg.opnsense.user:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+
+    - name: Cleanup Groups
+      oxlorg.opnsense.group:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_2_1'
+        - 'ANSIBLE_TEST_2_2'
+
+    - name: Cleanup dnsmasq General
+      oxlorg.opnsense.dnsmasq_general:
+        enabled: false
+
+    - name: Cleanup dnsmasq Domain
+      oxlorg.opnsense.dnsmasq_domain:
+        domain: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'test1.oxlorg'
+        - 'test2.oxlorg'
+
+    - name: Cleanup dnsmasq Host
+      oxlorg.opnsense.dnsmasq_host:
+        description: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup dnsmasq Range
+      oxlorg.opnsense.dnsmasq_range:
+        description: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup dnsmasq Option
+      oxlorg.opnsense.dnsmasq_option:
+        description: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup dnsmasq Boot
+      oxlorg.opnsense.dnsmasq_boot:
+        description: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup dnsmasq Tags
+      oxlorg.opnsense.dnsmasq_tag:
+        name: '{{ item }}'
+        state: 'absent'
+      loop:
+        - 'AnsibleTest1'
+
+    - name: Cleanup HAProxy general settings
+      oxlorg.opnsense.haproxy_general_settings:
+        enabled: false
+
+    - name: Cleanup HAProxy general cache settings
+      oxlorg.opnsense.haproxy_general_cache:
+        enabled: false
+
+    - name: Cleanup HAProxy general defaults settings
+      oxlorg.opnsense.haproxy_general_defaults:
+        retries: 3
+        redispatch: 'x-1'
+
+    - name: Cleanup HAProxy general logging settings
+      oxlorg.opnsense.haproxy_general_logging:
+        host: '127.0.0.1'
+        facility: 'local0'
+        level: 'info'
+
+    - name: Cleanup HAProxy general peers settings
+      oxlorg.opnsense.haproxy_general_peers:
+        enabled: false
+
+    - name: Cleanup HAProxy general stats settings
+      oxlorg.opnsense.haproxy_general_stats:
+        enabled: false
+
+    - name: Cleanup HAProxy general tuning settings
+      oxlorg.opnsense.haproxy_general_tuning:
+        root: false
+
+    - name: Cleanup HAProxy maintenance settings
+      oxlorg.opnsense.haproxy_maintenance:
+        sync_certs: false
+        reload_service: false
+        restart_service: false
+
+    - name: Cleanup HAProxy CPU rules
+      oxlorg.opnsense.haproxy_cpu:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+
+    - name: Cleanup HAProxy users
+      oxlorg.opnsense.haproxy_user:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'testuser1'
+        - 'testuser2'
+        - 'ansible_test_user'
+        - 'groupuser1'
+        - 'groupuser2'
+        - 'groupuser3'
+        - 'stats_admin'
+        - 'stats_monitor'
+
+    - name: Cleanup HAProxy groups
+      oxlorg.opnsense.haproxy_group:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'testgroup1'
+        - 'testgroup2'
+        - 'emptygroup'
+        - 'ansible_test_group'
+        - 'stats_admins'
+        - 'stats_monitor'
+
+    - name: Cleanup HAProxy ACLs
+      oxlorg.opnsense.haproxy_acl:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_ACL_1'
+
+    - name: Cleanup HAProxy Actions
+      oxlorg.opnsense.haproxy_action:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_FCGI_ACTION_1'
+        - 'ANSIBLE_TEST_FCGI_ACTION_2'
+
+    - name: Cleanup HAProxy Lua scripts
+      oxlorg.opnsense.haproxy_lua:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+
+    - name: Cleanup HAProxy FCGI applications
+      oxlorg.opnsense.haproxy_fcgi:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+
+    - name: Cleanup HAProxy Error files
+      oxlorg.opnsense.haproxy_errorfile:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+
+    - name: Cleanup NUT
+      oxlorg.opnsense.nut:
+        enabled: false
+
+    - name: Cleanup HAProxy Mailer
+      oxlorg.opnsense.haproxy_mailer:
+        name: "{{ item }}"
+        state: 'absent'
+      when: not ansible_check_mode
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+
+    - name: Cleanup Healthchecks
+      oxlorg.opnsense.haproxy_healthcheck:
+        name: "{{ item }}"
+        state: 'absent'
+      when: not ansible_check_mode
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_1_6'
+        - 'ANSIBLE_TEST_1_7'
+        - 'ANSIBLE_TEST_1_8'
+
+    - name: Cleanup HAProxy Mapfiles
+      oxlorg.opnsense.haproxy_mapfile:
+        name: "{{ item }}"
+        state: 'absent'
+      when: not ansible_check_mode
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+
+    - name: Cleanup HAProxy Resolver
+      oxlorg.opnsense.haproxy_resolver:
+        name: "{{ item }}"
+        state: 'absent'
+      when: not ansible_check_mode
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+
+    - name: Cleanup HAProxy Server
+      oxlorg.opnsense.haproxy_server:
+        name: "{{ item }}"
+        state: 'absent'
+      when: not ansible_check_mode
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_SERVER_1'
+
+    - name: Cleanup HAProxy Frontends
+      oxlorg.opnsense.haproxy_frontend:
+        name: "{{ item.n }}"
+        bind: "{{ item.b }}"
+        state: 'absent'
+      loop:
+        - {n: 'ANSIBLE_TEST_1_1', b: ['127.0.0.1:8080']}
+        - {n: 'ANSIBLE_TEST_1_1_NO_BACKEND', b: ['127.0.0.1:8082']}
+        - {n: 'ANSIBLE_TEST_1_2', b: ['127.0.0.1:8443']}
+        - {n: 'ANSIBLE_TEST_1_3', b: ['127.0.0.1:9080']}
+        - {n: 'ANSIBLE_TEST_1_4', b: ['127.0.0.1:8445']}
+        - {n: 'ANSIBLE_TEST_1_5', b: ['127.0.0.1:8446']}
+        - {n: 'ANSIBLE_TEST_1_6', b: ['127.0.0.1:8447']}
+
+    - name: Cleanup HAProxy Backends
+      oxlorg.opnsense.haproxy_backend:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+        - 'ANSIBLE_TEST_1_3'
+        - 'ANSIBLE_TEST_1_4'
+        - 'ANSIBLE_TEST_1_5'
+        - 'ANSIBLE_TEST_BACKEND_1'

@@ -1,0 +1,251 @@
+---
+
+- name: Testing Multiple Rules
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/oxlorg.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+    oxlorg.opnsense.list:
+      target: 'rule'
+
+    oxlorg.opnsense.rule_multi:
+      match_fields: ['description']
+      multi_control:
+        fail_verify: true
+        fail_process: true
+
+  environment:
+    HTTPS_PROXY: "{{ lookup('ansible.builtin.env', 'TEST_PROXY') | default('') }}"
+
+  tasks:
+    - name: Removing - do not exist
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_1'
+          - name: 'ANSIBLE_TEST_2_2'
+          - name: 'ANSIBLE_TEST_2_3'
+          - name: 'ANSIBLE_TEST_2_4'
+          - name: 'ANSIBLE_TEST_2_5'
+          - name: 'ANSIBLE_TEST_2_6'
+        multi_control:
+          state: 'absent'
+      register: opn1
+      failed_when: >
+        opn1.failed or
+        opn1.changed
+
+    - name: Adding
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_1'
+            source_net: '192.168.1.0/24'
+            destination_invert: true
+            destination_net: '10.0.0.0/8'
+            action: 'block'
+          - name: 'ANSIBLE_TEST_2_2'
+            source_net: '192.168.0.0/24'
+            destination_net: '192.168.10.0/24'
+            destination_port: 443
+            protocol: 'TCP'
+            interface: 'lan'
+          - name: 'ANSIBLE_TEST_2_3'
+            source_invert: true
+            source_net: 'bogons'
+            action: 'block'
+      register: opn2
+      failed_when: >
+        opn2.failed or
+        not opn2.changed
+
+    - name: Changing
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_1'
+            source_net: '192.168.1.0/24'
+            destination_invert: true
+            destination_net: '10.1.0.0/8'
+            action: 'block'
+          - name: 'ANSIBLE_TEST_2_2'
+            source_net: '192.168.0.0/24'
+            destination_net: '192.168.10.0/24'
+            destination_port: 8080
+            protocol: 'TCP'
+            interface: ['lan']
+          - name: 'ANSIBLE_TEST_2_3'
+            source_invert: true
+            source_net: 'bogons'
+            ip_protocol: 'inet6'
+            action: 'block'
+      when: not ansible_check_mode
+      register: opn3
+      failed_when: >
+        opn3.failed or
+        not opn3.changed
+
+    - name: Changing - not changed
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_1'
+            source_net: '192.168.1.0/24'
+            destination_invert: true
+            destination_net: '10.1.0.0/8'
+            action: 'block'
+          - name: 'ANSIBLE_TEST_2_2'
+            source_net: '192.168.0.0/24'
+            destination_net: '192.168.10.0/24'
+            destination_port: 8080
+            protocol: 'TCP'
+            interface: ['lan']
+          - name: 'ANSIBLE_TEST_2_3'
+            source_invert: true
+            source_net: 'bogons'
+            ip_protocol: 'inet6'
+            action: 'block'
+      when: not ansible_check_mode
+      register: opn7
+      failed_when: >
+        opn7.failed or
+        opn7.changed
+
+    - name: Adding 2
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_4'
+            interface: 'opt1'
+            protocol: 'ICMP'
+      when: not ansible_check_mode
+      register: opn8
+      failed_when: >
+        opn8.failed or
+        not opn8.changed
+
+    - name: Changing 2 - not changed
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_4'
+            interface: 'opt1'
+            protocol: 'ICMP'
+      when: not ansible_check_mode
+      register: opn9
+      failed_when: >
+        opn9.failed or
+        opn9.changed
+
+    - name: Fail on server-side validation
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_1'
+          - name: 'ANSIBLE_TEST_2_2'
+            destination_port: 'XXX'
+          - name: 'ANSIBLE_TEST_2_3'
+      register: opn6
+      failed_when: not opn6.failed
+      when: not ansible_check_mode
+
+    - name: Adding 3 - Advanced Mode
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_5'
+            allow_opts: true
+            tcp_flags: syn
+            tcp_flags_clear: ack
+            protocol: 'TCP'
+          - name: 'ANSIBLE_TEST_2_6'
+            protocol: TCP
+            state_type: sloppy
+            state_policy: floating
+            state_timeout: 42
+            max_src_nodes: 43
+            max_src_states: 44
+            max_src_conn: 45
+            max_src_conn_rate: 46
+            max_src_conn_rates: 47
+            overload: virusprot
+            adaptive_start: 48
+            adaptive_end: 99
+      register: opn10
+      failed_when: >
+        opn10.failed or
+        not opn10.changed
+
+    - name: Changing 3 - Advanced Mode - not changed
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_5'
+            allow_opts: true
+            tcp_flags: syn
+            tcp_flags_clear: ack
+            protocol: 'TCP'
+          - name: 'ANSIBLE_TEST_2_6'
+            protocol: TCP
+            state_type: sloppy
+            state_policy: floating
+            state_timeout: 42
+            max_src_nodes: 43
+            max_src_states: 44
+            max_src_conn: 45
+            max_src_conn_rate: 46
+            max_src_conn_rates: 47
+            overload: virusprot
+            adaptive_start: 48
+            adaptive_end: 99
+      when: not ansible_check_mode
+      register: opn11
+      failed_when: >
+        opn11.failed or
+        opn11.changed
+
+    # noting to validate..
+    # - name: Fail on client-side validation
+    #   oxlorg.opnsense.rule_multi:
+    #     rules:
+    #       - name: 'ANSIBLE_TEST_2_1'
+    #       - name: 'ANSIBLE_TEST_2_2'
+    #         destination_port: 'XXX'
+    #       - name: 'ANSIBLE_TEST_2_3'
+    #   register: opn6
+    #   failed_when: not opn6.failed
+    #
+    # - name: Don't fail on client-side validation
+    #   oxlorg.opnsense.rule_multi:
+    #     rules:
+    #       - name: 'ANSIBLE_TEST_2_1'
+    #       - name: 'ANSIBLE_TEST_2_2'
+    #         destination_port: 'XXX'
+    #       - name: 'ANSIBLE_TEST_2_3'
+    #     fail_verification: false
+    #   register: opn7
+    #   failed_when: opn7.failed
+    #   when: ansible_check_mode  # else the server-side will reject it
+
+    - name: Listing rules
+      oxlorg.opnsense.list:
+      register: opn4
+      failed_when: >
+        'data' not in opn4 or
+        opn4.data | length != 6
+      when: not ansible_check_mode
+
+    - name: Removing
+      oxlorg.opnsense.rule_multi:
+        rules:
+          - name: 'ANSIBLE_TEST_2_1'
+          - name: 'ANSIBLE_TEST_2_2'
+          - name: 'ANSIBLE_TEST_2_3'
+          - name: 'ANSIBLE_TEST_2_4'
+          - name: 'ANSIBLE_TEST_2_5'
+          - name: 'ANSIBLE_TEST_2_6'
+        multi_control:
+          state: 'absent'
+
+    - name: Checking cleanup
+      oxlorg.opnsense.list:
+      register: opn5
+      failed_when: >
+        'data' not in opn5 or
+        opn5.data | length != 0
+      when: not ansible_check_mode

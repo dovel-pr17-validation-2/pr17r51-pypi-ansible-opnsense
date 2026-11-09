@@ -1,0 +1,141 @@
+# Tests
+
+## Tester dependencies
+
+```bash
+python3 -m pip install -r requirements_test.txt
+```
+
+## Firewall dependencies
+
+The Firewall used for testing should be a dedicated VM for testing. You can use the official [ova image](https://docs.opnsense.org/manual/how-tos/installova.html).
+
+**THE TESTS WILL OVERRIDE THE EXISTING CONFIG!**
+
+Most tests fail if some other config is found.
+
+### Packages
+
+Some tests need packages to be pre-installed:
+
+* webproxy_* - `os-squid`
+* frr_* - `os-frr`
+* bind_* - `os-bind`
+* acme_* - `os-acme-client`
+* postfix_* - `os-postfix`
+* nginx_* - `os-nginx`
+
+See also: `1_dependencies.yml`
+
+### Interfaces
+
+Some tests benefit from having a second network-interface available.
+
+Add dummy interfaces:
+* vtnet1 => assigned as `TEST`/`opt1` (should be in a dedicated layer-2 network)
+* vtnet2 => leave unassigned
+* vtnet3 => assigned as `TEST2`/`opt2` (interface down)
+* vtnet4 => unassigned - it gets dynamically managed by the `interface_assignment` tests as `opt3`
+
+You need to add a `opt1` dummy-interface named `TEST`. The assigned IPs do not matter.
+
+Add another interface and leave it unassigned (`opt2` - `vtnet2`).
+
+### Internet access
+
+To perform some tests (system, ids) the test firewall needs to reach some public service:
+
+* system - `pkg.opnsense.org`
+* ids - `rules.emergingthreats.net`
+
+### Certificates
+
+These internal certificates need to be created:
+
+* CA: `OpenVPN`
+* Client Certificate: `OpenVPN Client`
+* Server Certificate: `OpenVPN Server` - SAN `DNS:openvpn.intern`
+
+### Gateways
+
+The gateway tests will not work correctly if the LAN network mismatches.
+
+You can provide your GW IPs via env-vars: `TEST_FIREWALL_GW1` and `TEST_FIREWALL_GW2`
+
+The `route` module will expect the gateways `LAN_GW` and `TEST-GW` to exist.
+
+### Rule interface groups
+
+The gateway tests will not work correctly if the LAN interface mismatches.
+
+You can provide your GW lan-if via env-vars: `TEST_FIREWALL_RULE_GRP_IF`
+
+## DHCRelay
+
+The DHCRelay tests will not work correctly if the LAN interface mismatches.
+
+You can provide your lan-if via env-vars: `TEST_DHCRELAY_IF`
+
+
+### LAGG Interfaces
+
+The LAGG tests will not work correctly if the unassigned interface mismatches.
+
+You can provide your if via env-vars: `TEST_FIREWALL_LAGG_IF`
+
+And the count of existing LAGGs via `TEST_FIREWALL_LAGG_CNT`
+
+
+## High Availability
+
+Tests for `hasync_general` can be run without a backup firewall. However, most of HASync Service tests require
+a backup firewall to work. Tests requiring a backup firewall are skipped unless you provide connection details to the
+backup firewall.
+
+You can provide your backup firewall connection via env-vars:
+
+  * `TEST_HASYNC_PEER`
+  * `TEST_HASYNC_USERNAME`
+  * `TEST_HASYNC_PASSWORD`
+
+## Snapshots
+
+To run snapshot tests - the target firewall needs to be installed with a ZFS filesystem!
+
+----
+
+## Run
+
+### Single module
+
+```bash
+bash scripts/test_single.sh
+> Arguments:
+>   1: firewall
+>   2: api key file
+>   3: path to local collection - set to '0' to clone from github
+>   4: name of test to run
+>   5: if check-mode should be ran (optional; 0/1; default=1)
+>   6: path to virtual environment (optional)
+```
+
+### All modules
+
+```bash
+bash scripts/test.sh
+> Arguments:
+>   1: firewall
+>   2: api key file
+>   3: path to local collection - set to '0' to clone from github
+>   4: path to virtual environment (optional)
+```
+
+----
+
+## Automatic tests
+
+The tests are run automatically using the [OXL infrastructure](https://github.com/O-X-L/ansible-role-oxl-cicd)!
+
+It is based on [some bash scripts](https://github.com/O-X-L/ansible-role-oxl-cicd/blob/latest/templates/usr/local/bin/cicd/collection_test.sh.j2) and systemd timers.
+
+Logs for those functional tests can be found here: [Short](https://badges.oss.oxl.app/log/collection_oxlorg.opnsense_test_short.log), [Full](https://badges.oss.oxl.app/log/collection_oxlorg.opnsense_test.log)

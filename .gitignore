@@ -1,0 +1,14 @@
+docs/build/
+.venv/
+.idea/
+.vscode/
+.ansible/
+venv/
+
+*.tar.gz
+.coverage
+.coverage.*
+__pycache__
+/test.log
+/test.sh
+.DS_Store

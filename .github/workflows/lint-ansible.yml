@@ -1,0 +1,67 @@
+---
+
+name: Lint Ansible
+
+on:
+  push:
+    branches: [latest]
+    paths:
+      - 'tests/**.yml'
+      - 'plugins/**.py'
+      - 'meta/*'
+      - '.github/workflows/lint-ansible.yml'
+      - 'requirements_lint.txt'
+      - '.yamllint'
+      - '.ansible-lint.yml'
+  pull_request:
+    branches: [latest]
+    paths:
+      - 'tests/**.yml'
+      - 'plugins/**.py'
+      - 'meta/*'
+      - '.github/workflows/lint-ansible.yml'
+      - 'requirements_lint.txt'
+      - '.yamllint'
+      - '.ansible-lint.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements_lint.txt > /dev/null
+        shell: bash
+
+      - name: Running YamlLint
+        run: |
+          yamllint --version
+          yamllint .
+        shell: bash
+        env:
+          PYTHONUNBUFFERED: 1
+
+      - name: Preparing collection for AnsibleLint
+        run: |
+          mkdir -p /tmp/ansible_lint/collections/ansible_collections/oxlorg
+          ln -s ${{ github.workspace }} /tmp/ansible_lint/collections/ansible_collections/oxlorg/opnsense
+        shell: bash
+
+      - name: Running AnsibleLint
+        run: |
+          ansible-lint --version
+          ANSIBLE_COLLECTIONS_PATH=/tmp/ansible_lint/collections ansible-lint -c .ansible-lint.yml
+        shell: bash
+        env:
+          PYTHONUNBUFFERED: 1

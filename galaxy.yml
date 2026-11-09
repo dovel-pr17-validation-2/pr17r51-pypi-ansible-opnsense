@@ -1,0 +1,28 @@
+---
+
+namespace: 'oxlorg'
+name: 'opnsense'
+version: 26.1.11
+readme: 'README.md'
+authors:
+  - 'OXL IT Services <contact+opnsense@OXL.at>'
+description: "Ansible Collection to manage OPNsense firewalls using its API"
+license_file: 'LICENSE.txt'
+tags:
+  - 'firewall'
+  - 'api'
+  - 'opnsense'
+  - 'iac'
+  - 'network'
+  - 'security'
+  - 'filter'
+dependencies: {}
+repository: 'https://github.com/O-X-L/ansible-opnsense'
+documentation: 'https://ansible-opnsense.oxl.app'
+homepage: 'https://www.OXL.at'
+issues: 'https://github.com/O-X-L/ansible-opnsense/issues'
+build_ignore: [
+  '*_pytest.py', '*_testdata.py', '*pytest_cache', '*/_tmpl.py',
+  '.**', 'pytest.ini', 'requirements_*.txt',
+  'docs**', 'scripts**', 'venv**', 'Makefile', 'legacy**',
+]

@@ -1,0 +1,412 @@
+.. _modules_dhcp:
+
+.. include:: ../_include/head.rst
+
+====
+DHCP
+====
+
+**STATE**: stable
+
+**TESTS**: `Reservation <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_reservation.yml>`_ |
+`ControlAgent <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_controlagent.yml>`_ |
+`Subnet <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_subnet.yml>`_ |
+`General <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_general.yml>`_ |
+`HA-Peer <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_ha_peer.yml>`_ |
+`DHCPv4 Option <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_option.yml>`_ |
+`DDNS <https://github.com/O-X-L/ansible-opnsense/blob/latest/tests/dhcp_ddns.yml>`_
+
+**API Docs**: `Core - KEA <https://docs.opnsense.org/development/api/core/kea.html>`_
+
+**Service Docs**: `DHCP <https://docs.opnsense.org/manual/dhcp.html#kea-dhcp>`_
+
+Contribution
+************
+
+Thanks to `@KalleDK <https://github.com/KalleDK>`_, `@Rath <https://github.com/superstes>`_ and `@woelfle <https://github.com/woelfle>`_ for developing these modules!
+
+----
+
+Definition
+**********
+
+.. include:: ../_include/param_basic.rst
+
+oxlorg.opnsense.dhcp_general
+============================
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "interfaces","list","false","\-","ints","Comma separated list of network interfaces to listen on for DHCP requests"
+    "socket_type","string","false","raw","dhcp_socket_type","One of: 'raw', 'udp'. Socket type used for DHCP communication."
+    "fw_rules","boolean","false","true","fwrules, rules","Automatically add a basic set of firewall rules to allow DHCP traffic"
+    "lifetime","int","false","4000","valid_lifetime","Defines how long the addresses (leases) given out by the server are valid (in seconds)"
+    "ha","dictionary","false","\-","\-","High-availability settings. Left untouched if not supplied. Sub-parameters: 'enabled' (boolean, default false) - enable high-availability on this server, requires the control agent to be enabled as well; 'this_server_name' (string, default '') - name of this server, should match one of the configured peers - when left empty, the hostname of the machine is used; 'max_unacked_clients' (int, default 0) - number of clients which send messages to the partner but appear to not receive any response"
+
+oxlorg.opnsense.dhcp_ha_peer
+============================
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "name","string","true","\-","\-","Name of the peer. There should be one entry matching the 'ha.this_server_name' of this firewall's dhcp_general config. All nodes should contain the exact same peer definitions"
+    "role","string","true","\-","\-","One of: 'primary', 'standby'. Role this peer takes in the high-availability setup"
+    "url","string","true","\-","\-","URL the peer's server instance uses for high-availability communication. Has to use a different port than its control agent (e.g. 'http://192.168.0.1:8080')"
+    "reload","boolean","false","true","\-", .. include:: ../_include/param_reload.rst
+
+oxlorg.opnsense.dhcp_reservation
+================================
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "ip","string","true","","ip_address","IP address to offer to the client"
+    "mac","string","false for state changes, else true","","mac_address","MAC/Ether address of the client in question"
+    "subnet","string","false for state changes, else true","","\-","Subnet this reservation belongs to"
+    "hostname","string","false","","\-","Offer a hostname to the client"
+    "description","string","false","","\-","Optional description"
+    "reload","boolean","false","true","\-", .. include:: ../_include/param_reload.rst
+
+oxlorg.opnsense.dhcp_controlagent
+=================================
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "enabled","boolean","false","true","\-","Enable or disable the control agent"
+    "http_host","string","false","127.0.0.1","","Address on which the RESTful interface should be available"
+    "http_port","int","false","8000","","MAC/Ether address of the client in question"
+    "reload","boolean","false","true","\-", .. include:: ../_include/param_reload.rst
+
+oxlorg.opnsense.dhcp_subnet
+===========================
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "subnet","string","true","\-","\-","Subnet to use. should be large enough to hold the specified pools and reservations"
+    "description","string","false","\-","desc","Optional description of the subnet"
+    "pools","list","false","\-","\-","List of pools, one per line in range or subnet format (e.g. 192.168.0.100 - 192.168.0.200)"
+    "auto_options","boolean","false","true","option_data_autocollect","Automatically update option data for relevant attributes as routers, dns servers and ntp servers when applying settings from the gui."
+    "gateway","list","false","\-","gw,routers","Default gateways to offer to the clients"
+    "routes","string","false","\-","static_routes","Static routes that the client should install in its routing cache, defined as dest-ip1,router-ip1;dest-ip2,router-ip2"
+    "dns","list","false","\-","dns_servers,dns_srv","DNS servers to offer to the clients"
+    "domain","string","false","\-","domain_name,dom_name,dom","The domain name to offer to the client, set to this firewall's domain name when left empty"
+    "domain_search","list","false","\-","dom_search","Specifies a 'search list' of Domain Names to be used by the client to locate not-fully-qualified domain names."
+    "ntp_servers","list","false","\-","ntp_srv,ntp","Specifies a list of IP addresses indicating NTP (RFC 5905) servers available to the client."
+    "time_servers","list","false","\-","time_srv","Specifies a list of RFC 868 time servers available to the client."
+    "next_server","string","false","\-","next_srv","Next server IP address"
+    "tftp_server","string","false","\-","tftp,tftp_srv,tftp_server_name","TFTP server address or fqdn"
+    "tftp_file","string","false","\-","tftp_boot_file,boot_file_name","TFTP Boot filename to request"
+    "ipv","int","false","4","ip_version","IP version - one of '4', '6'"
+    "v6_only_preferred","boolean","false","false","v6_preferred","If clients should prefer IPv6 over IPv4"
+
+oxlorg.opnsense.dhcp_option
+===========================
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "description","string","true","\-","name, desc","Unique description for this DHCPv4 option definition"
+    "code","string","false for state changes, else true","","\-","DHCP option code"
+    "encoding","string","false","hex","\-","Encoding used for option data. One of: 'hex', 'ipv4-address', 'ipv6-address', 'uint8', 'uint16', 'uint32', 'int32', 'boolean', 'string', 'fqdn'"
+    "data","string","false for state changes, else true","","\-","Option data encoded according to the selected encoding"
+    "force","boolean","false","false","always_send","Always send this option to clients"
+    "match_code","string","false","","\-","Optional DHCP option code that must match before sending this option"
+    "match_encoding","string","false","","\-","Encoding used for match data. Same choices as 'encoding', plus the empty value"
+    "match_data","string","false","","\-","Optional option data that must match before sending this option"
+    "match_fields","list","false","['description']","\-","Fields that are used to match configured options with the running config. One or more of: 'code', 'description'"
+    "reload","boolean","false","true","\-", .. include:: ../_include/param_reload.rst
+
+
+
+----
+
+Examples
+********
+
+oxlorg.opnsense.dhcp_general
+============================
+
+.. code-block:: yaml
+
+      - hosts: firewalls
+      connection: local
+        gather_facts: no
+        module_defaults:
+          group/oxlorg.opnsense.all:
+            firewall: 'opnsense.template.opnsense.oxl.app'
+            api_credentials_file: '/home/guy/.secret/opn.key'
+
+        tasks:
+          - name: Listen to network interfaces
+            oxlorg.opnsense.dhcp_general:
+              enabled: true
+              interfaces: 'lan,opt1,opt2,vlan0.10'
+              # socket_type: 'raw'
+              # fw_rules: true
+              # lifetime: 4000
+              # ha:
+              #   enabled: false
+              #   this_server_name: ''
+              #   max_unacked_clients: 0
+
+          - name: Enabling high-availability
+            oxlorg.opnsense.dhcp_general:
+              enabled: true
+              interfaces: 'lan'
+              ha:
+                enabled: true
+                this_server_name: 'fw01'
+                max_unacked_clients: 2
+
+----
+
+oxlorg.opnsense.dhcp_ha_peer
+============================
+
+.. code-block:: yaml
+
+    - hosts: firewalls
+      connection: local
+      gather_facts: no
+      module_defaults:
+        group/oxlorg.opnsense.all:
+          firewall: 'opnsense.template.opnsense.oxl.app'
+          api_credential_file: '/home/guy/.secret/opn.key'
+
+        oxlorg.opnsense.list:
+          target: 'dhcp_ha_peer'
+
+      tasks:
+        - name: Example
+          oxlorg.opnsense.dhcp_ha_peer:
+            name: 'fw01'
+            role: 'primary'
+            url: 'http://192.168.0.1:8080'
+            # state: 'present'
+            # reload: true
+            # debug: false
+
+        - name: Adding the peers
+          oxlorg.opnsense.dhcp_ha_peer:
+            name: "{{ item.name }}"
+            role: "{{ item.role }}"
+            url: "{{ item.url }}"
+          loop:
+            - {name: 'fw01', role: 'primary', url: 'http://192.168.0.1:8080'}
+            - {name: 'fw02', role: 'standby', url: 'http://192.168.0.2:8080'}
+
+        - name: Removing
+          oxlorg.opnsense.dhcp_ha_peer:
+            name: 'fw02'
+            role: 'standby'
+            url: 'http://192.168.0.2:8080'
+            state: 'absent'
+
+        - name: Listing
+          oxlorg.opnsense.list:
+          #  target: 'dhcp_ha_peer'
+          register: existing_entries
+
+        - name: Show existing peers
+          ansible.builtin.debug:
+            var: existing_entries.data
+
+----
+
+oxlorg.opnsense.dhcp_reservation
+================================
+
+.. code-block:: yaml
+
+    - hosts: firewalls
+      connection: local
+      gather_facts: no
+      module_defaults:
+        group/oxlorg.opnsense.all:
+          firewall: 'opnsense.template.opnsense.oxl.app'
+          api_credential_file: '/home/guy/.secret/opn.key'
+
+        oxlorg.opnsense.list:
+          target: 'dhcp_reservation'
+
+      tasks:
+        - name: Example
+          oxlorg.opnsense.dhcp_reservation:
+            ip: '192.168.0.1'
+            subnet: '192.168.0.0/24'
+            mac: 'aa:aa:aa:bb:bb:bb'
+            # hostname: 'test'
+            # description: ''
+            # state: 'present'
+            # reload: true
+            # debug: false
+
+        - name: Adding
+          oxlorg.opnsense.dhcp_reservation:
+            subnet: '192.168.0.0/24'
+            ip: '192.168.0.1'
+            mac: 'aa:aa:aa:bb:bb:bb'
+
+        - name: Removing
+          oxlorg.opnsense.dhcp_reservation:
+            ip: '192.168.0.1'
+            state: 'absent'
+
+        - name: Listing
+          oxlorg.opnsense.list:
+          #  target: 'dhcp_reservation'
+          register: existing_entries
+
+        - name: Show existing reservations
+          ansible.builtin.debug:
+            var: existing_entries.data
+
+----
+
+oxlorg.opnsense.dhcp_controlagent
+=================================
+
+.. code-block:: yaml
+
+    - hosts: firewalls
+      connection: local
+      gather_facts: no
+      module_defaults:
+        group/oxlorg.opnsense.all:
+          firewall: 'opnsense.template.opnsense.oxl.app'
+          api_credential_file: '/home/guy/.secret/opn.key'
+
+      tasks:
+        - name: Example
+          oxlorg.opnsense.dhcp_controlagent:
+            enabled: true
+            http_host: 127.0.0.1
+            http_port: 8000
+            # reload: true
+            # debug: false
+
+        - name: Stopping
+          oxlorg.opnsense.dhcp_controlagent:
+            enabled: false
+            reload: true
+
+----
+
+oxlorg.opnsense.dhcp_subnet
+===========================
+
+.. code-block:: yaml
+
+    - host: firewalls
+      connection: local
+      gather_facts: false
+      module_defaults:
+        group/oxlorg.opnsense.all:
+          firewall: 'opnsense.template.opnsense.oxl.app'
+          api_credential_file: '/home/guy/.secret/opn.key'
+
+        oxlorg.opnsense.list:
+          target: 'dhcp_reservation'
+
+      tasks:
+        - name: Example
+          oxlorg.opnsense.dhcp_subnet:
+            subnet: '192.168.89.0/24'
+            # description: ''
+            # pools: []
+            # auto_options: true
+            # gateway: ''
+            # routes: ''
+            # dns: []
+            # domain: ''
+            # domain_search: []
+            # ntp_servers: []
+            # time_servers: []
+            # next_server: ''
+            # tftp_server: ''
+            # tftp_file: ''
+            # ipv: 4
+            # v6_only_preferred: false
+            # match_fields: ['subnet']
+
+        - name: Add subnet
+          oxlorg.opnsense.dhcp_subnet:
+            subnet: '10.0.100.0/24'
+            pools:
+              - '10.0.100.1-10.0.100.99'
+              - '10.0.100.150-10.0.100.199'
+            auto_options: false
+            gateway: '192.168.89.254'
+            dns: ['1.1.1.2', '1.0.0.2']
+            domain: 'test.lan'
+
+        - name: Remove subnet
+          oxlorg.opnsense.dhcp_subnet:
+            subnet: '10.0.100.0/24'
+            state: absent
+
+----
+
+oxlorg.opnsense.dhcp_option
+===========================
+
+.. code-block:: yaml
+
+    - hosts: firewalls
+      connection: local
+      gather_facts: false
+      module_defaults:
+        group/oxlorg.opnsense.all:
+          firewall: 'opnsense.template.opnsense.oxl.app'
+          api_credential_file: '/home/guy/.secret/opn.key'
+
+        oxlorg.opnsense.list:
+          target: 'dhcp_option'
+
+      tasks:
+        - name: Example
+          oxlorg.opnsense.dhcp_option:
+            description: 'ansible-test-option'
+            code: '66'
+            encoding: 'string'
+            data: 'test'
+            # force: false
+            # match_code: ''
+            # match_encoding: ''
+            # match_data: ''
+            # match_fields: ['description']
+            # state: 'present'
+            # reload: true
+            # debug: false
+
+        - name: Add option, only sent to clients that ask for it
+          oxlorg.opnsense.dhcp_option:
+            description: 'pxe-vendor'
+            code: '43'
+            encoding: 'hex'
+            data: '0104c0a80001'
+            match_code: '60'
+            match_encoding: 'string'
+            match_data: 'PXEClient'
+
+        - name: Remove option
+          oxlorg.opnsense.dhcp_option:
+            description: 'ansible-test-option'
+            state: 'absent'
+
+        - name: Listing
+          oxlorg.opnsense.list:
+          register: existing_entries
+
+        - name: Show existing options
+          ansible.builtin.debug:
+            var: existing_entries.data

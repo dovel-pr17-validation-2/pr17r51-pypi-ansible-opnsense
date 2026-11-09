@@ -1,0 +1,107 @@
+.. _modules_package:
+
+.. include:: ../_include/head.rst
+
+=======
+Package
+=======
+
+**STATE**: stable
+
+**TESTS**: `Playbook <https://github.com/oxlorg/collection_opnsense/blob/latest/tests/package.yml>`_
+
+**API Docs**: `Core - Firmware <https://docs.opnsense.org/development/api/core/firmware.html>`_
+
+**Service Docs**: `Plugins <https://docs.opnsense.org/manual/firmware.html#plugins>`_
+
+Contribution
+************
+
+Thanks to `@Rath <https://github.com/superstes>`_ for developing this module!
+
+----
+
+Info
+****
+
+If:
+
+- the package cache is too old, it will take some time - as OPNsense automatically checks for updates beforehand
+- the target firewall runs an outdated version, the actions 'install' and 'reinstall' will fail as OPNsense prevents it
+
+  - in that case - you should run :ref:`oxlorg.opnsense.system <modules_system>` with action 'upgrade'
+
+
+Be aware that the list-module with target 'package' will return installed plugins AND base-packages.
+
+Definition
+**********
+
+..  csv-table:: Definition
+    :header: "Parameter", "Type", "Required", "Default", "Aliases", "Comment"
+    :widths: 15 10 10 10 10 45
+
+    "name","list of strings","true","\-","Package or list of packages to process"
+    "action","string","true","\-","Action to execute. One of: 'install', 'reinstall', 'remove', 'lock', 'unlock'"
+    "post_sleep","int","false","3","Seconds to sleep after executing the action. The firewall needs some time to update package info."
+    "timeout","float","false","30.0","Seconds until the action request times-out"
+
+.. include:: ../_include/param_basic.rst
+
+----
+
+Examples
+********
+
+.. code-block:: yaml
+
+    - hosts: firewalls
+      connection: local
+      gather_facts: false
+      module_defaults:
+        group/oxlorg.opnsense.all:
+          firewall: 'opnsense.template.opnsense.oxl.app'
+          api_credential_file: '/home/guy/.secret/opn.key'
+
+        oxlorg.opnsense.list:
+          target: 'package'
+
+      tasks:
+        - name: Installing
+          oxlorg.opnsense.package:
+            name: 'os-api-backup'
+            action: 'install'
+
+        - name: Installing - multiple packages at once
+          oxlorg.opnsense.package:
+            name: ['os-api-backup', 'os-dmidecode']
+            action: 'install'
+
+        - name: Removing
+          oxlorg.opnsense.package:
+            name: 'os-api-backup'
+            action: 'remove'
+
+        - name: Re-installing
+          oxlorg.opnsense.package:
+            name: 'os-api-backup'
+            action: 'reinstall'
+
+        - name: Locking
+          oxlorg.opnsense.package:
+            name: 'os-api-backup'
+            action: 'lock'
+
+        - name: Unlocking
+          oxlorg.opnsense.package:
+            name: 'os-api-backup'
+            action: 'unlock'
+
+        - name: Listing
+          oxlorg.opnsense.list:
+          #  target: 'package'
+          register: existing_entries
+
+        - name: Printing installed packages
+          ansible.builtin.debug:
+            var: existing_entries.data

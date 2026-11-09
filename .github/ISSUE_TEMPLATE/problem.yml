@@ -1,0 +1,59 @@
+---
+
+name: Problem
+description: You have encountered problems when using the modules
+title: "Problem: "
+labels: ['problem', 'triage']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please make sure to go through these steps **before opening an issue**:
+
+        - [ ] Read the documentation of the affected module: [Docs](https://github.com/O-X-L/ansible-opnsense/tree/latest/docs)
+
+        - [ ] Read the troubleshooting info: [Info](https://github.com/O-X-L/ansible-opnsense#errors)
+
+        - [ ] Check if there are existing [issues](https://github.com/O-X-L/ansible-opnsense/issues)
+        or [discussions](https://github.com/O-X-L/ansible-opnsense/discussions) regarding your topic
+
+  - type: textarea
+    id: modules
+    attributes:
+      label: Modules
+      description: |
+        What modules are affected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: version
+    attributes:
+      label: Version
+      description: |
+        What version of the Collection are you using?
+        > Command: `ansible-galaxy collection list | grep opnsense`
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: version-opnsense
+    attributes:
+      label: OPNsense Version
+      description: |
+        What version of OPNsense are you running?
+        Find it in the WebUI at 'System - Firmware - Status'
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: |
+        Describe the problem you encountered and tell us what you would have expected to happen
+    validations:
+      required: true

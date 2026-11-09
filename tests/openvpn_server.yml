@@ -1,0 +1,319 @@
+---
+
+- name: Testing OpenVPN Server
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/oxlorg.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+    oxlorg.opnsense.list:
+      target: 'openvpn_instance'
+
+  environment:
+    HTTPS_PROXY: "{{ lookup('ansible.builtin.env', 'TEST_PROXY') | default('') }}"
+
+  tasks:
+    - name: Listing
+      oxlorg.opnsense.list:
+      register: opn_pre1
+      failed_when: >
+        'data' not in opn_pre1 or
+        opn_pre1.data | length != 0
+
+    - name: Removing - does not exist
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        state: 'absent'
+      register: opn_pre2
+      failed_when: >
+        opn_pre2.failed or
+        opn_pre2.changed
+
+    - name: Adding 1 - failing because no client-net was provided
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+      register: opn_fail1
+      failed_when: not opn_fail1.failed
+
+    - name: Adding 1 - failing because no ca/cert was provided
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        server: '192.168.77.0/29'
+      register: opn_fail2
+      failed_when: not opn_fail2.failed
+
+    - name: Adding 1
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+      register: opn1
+      failed_when: >
+        opn1.failed or
+        not opn1.changed
+
+    - name: Changing 1
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        cert_depth: 1
+        data_ciphers: ['AES-256-GCM', 'CHACHA20-POLY1305']
+        max_connections: 100
+        auth_mode: ['Local Database']
+        user_as_cn: true
+        user_cn_strict: true
+        push_options: ['block-outside-dns', 'register-dns']
+        mtu: 1400
+      register: opn9
+      failed_when: >
+        opn9.failed or
+        not opn9.changed
+
+    - name: Disabling 1
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        cert_depth: 1
+        data_ciphers: ['AES-256-GCM', 'CHACHA20-POLY1305']
+        max_connections: 100
+        auth_mode: ['Local Database']
+        user_as_cn: true
+        user_cn_strict: true
+        push_options: ['block-outside-dns', 'register-dns']
+        mtu: 1400
+        enabled: false
+      register: opn2
+      failed_when: >
+        opn2.failed or
+        not opn2.changed
+      when: not ansible_check_mode
+
+    - name: Disabling 1 - nothing changed
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        cert_depth: 1
+        data_ciphers: ['AES-256-GCM', 'CHACHA20-POLY1305']
+        max_connections: 100
+        auth_mode: ['Local Database']
+        user_as_cn: true
+        user_cn_strict: true
+        push_options: ['block-outside-dns', 'register-dns']
+        mtu: 1400
+        enabled: false
+      register: opn3
+      failed_when: >
+        opn3.failed or
+        opn3.changed
+      when: not ansible_check_mode
+
+    - name: Enabling 1
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        cert_depth: 1
+        data_ciphers: ['AES-256-GCM', 'CHACHA20-POLY1305']
+        max_connections: 100
+        auth_mode: ['Local Database']
+        user_as_cn: true
+        user_cn_strict: true
+        push_options: ['block-outside-dns', 'register-dns']
+        mtu: 1400
+      register: opn4
+      failed_when: >
+        opn4.failed or
+        not opn4.changed
+      when: not ansible_check_mode
+
+    - name: Adding 2
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_2'
+        port: 20010
+        port_share: 127.0.0.1:443
+        protocol: 'tcp4'
+        mode: 'tap'
+        server: '192.168.77.128/29'
+        network_local: ['192.168.78.0/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        verify_remote_certificate: true
+        data_cipher_fallback: 'CHACHA20-POLY1305'
+        max_connections: 10
+        auth_mode: ['Local Database']
+        user_as_cn: true
+        auth_token_time: 3600
+        auth_token_renewal: 5
+        require_client_provisioning: true
+        mtu: 1420
+        dns_servers: ['1.1.1.1', '8.8.8.8']
+        redirect_gateway:
+          - def1
+          - block-local
+        persist_address_pool: true
+      register: opn5
+      failed_when: >
+        opn5.failed or
+        not opn5.changed
+
+    - name: Adding 2 - nothing changed
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_2'
+        port: 20010
+        port_share: 127.0.0.1:443
+        protocol: 'tcp4'
+        mode: 'tap'
+        server: '192.168.77.128/29'
+        network_local: ['192.168.78.0/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        verify_remote_certificate: true
+        data_cipher_fallback: 'CHACHA20-POLY1305'
+        max_connections: 10
+        auth_mode: ['Local Database']
+        user_as_cn: true
+        auth_token_time: 3600
+        auth_token_renewal: 5
+        require_client_provisioning: true
+        mtu: 1420
+        dns_servers: ['1.1.1.1', '8.8.8.8']
+        redirect_gateway:
+          - def1
+          - block-local
+        persist_address_pool: true
+      when: not ansible_check_mode
+      register: opn6
+      failed_when: >
+        opn6.failed or
+        opn6.changed
+
+    - name: Removing 2
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_1_2'
+        state: 'absent'
+      register: opn7
+      failed_when: >
+        opn7.failed or
+        not opn7.changed
+      when: not ansible_check_mode
+
+    - name: Listing
+      oxlorg.opnsense.list:
+      register: opn8
+      failed_when: >
+        'data' not in opn8 or
+        opn8.data | length != 1
+      when: not ansible_check_mode
+
+    - name: Cleanup
+      oxlorg.opnsense.openvpn_server:
+        name: "{{ item }}"
+        state: 'absent'
+      loop:
+        - 'ANSIBLE_TEST_1_1'
+        - 'ANSIBLE_TEST_1_2'
+      when: not ansible_check_mode
+
+    - name: Listing
+      oxlorg.opnsense.list:
+      register: opn_post1
+      failed_when: >
+        'data' not in opn_post1 or
+        opn_post1.data | length != 0
+
+- name: Testing OpenVPN Server with Static Key
+  hosts: localhost
+  gather_facts: no
+  module_defaults:
+    group/oxlorg.opnsense.all:
+      firewall: "{{ lookup('ansible.builtin.env', 'TEST_FIREWALL') }}"
+      api_credential_file: "{{ lookup('ansible.builtin.env', 'TEST_API_KEY') }}"
+      ssl_verify: false
+
+  environment:
+    HTTPS_PROXY: "{{ lookup('ansible.builtin.env', 'TEST_PROXY') | default('') }}"
+
+  tasks:
+    - name: Adding dummy key
+      oxlorg.opnsense.openvpn_static_key:
+        name: 'ANSIBLE_TEST_3_1'
+      when: not ansible_check_mode
+
+    - name: Adding 1 with link to static-key
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_2_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        key: 'ANSIBLE_TEST_3_1'
+      register: opn10
+      failed_when: >
+        opn10.failed or
+        not opn10.changed
+      when: not ansible_check_mode
+
+    - name: Adding 1 with link to static-key - nothing changed
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_2_1'
+        port: 20000
+        protocol: 'udp'
+        mode: 'tun'
+        server: '192.168.77.0/29'
+        network_local: ['192.168.78.128/27']
+        ca: 'OpenVPN'
+        certificate: 'OpenVPN Server'
+        key: 'ANSIBLE_TEST_3_1'
+      register: opn11
+      failed_when: >
+        opn11.failed or
+        opn11.changed
+      when: not ansible_check_mode
+
+    - name: Cleanup
+      oxlorg.opnsense.openvpn_server:
+        name: 'ANSIBLE_TEST_2_1'
+        state: 'absent'
+      when: not ansible_check_mode
+
+    - name: Cleanup key
+      oxlorg.opnsense.openvpn_static_key:
+        name: 'ANSIBLE_TEST_3_1'
+        state: 'absent'
+      when: not ansible_check_mode
